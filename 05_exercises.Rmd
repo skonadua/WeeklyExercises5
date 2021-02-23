@@ -1,6 +1,6 @@
 ---
 title: 'Weekly Exercises #5'
-author: "Stephanie Konadu-Acheampong"
+author: "Stephanie Konadu-Acheampong with help from Jennifer Huang"
 output: 
   html_document:
     keep_md: TRUE
@@ -242,9 +242,9 @@ garden_cum <- garden_harvest %>%
   ungroup() %>% 
   complete(variety, date, fill = list(daily_harvest_lb = 0)) %>% 
   group_by(variety) %>% 
-  mutate(cum_harvest_lb = cumsum(daily_harvest_lb)) %>% 
+  mutate(cum_harvest_lb = cumsum(daily_harvest_lb)) %>%
   ungroup() %>% 
-  mutate(variety = fct_reorder(variety, daily_harvest_lb, .desc = TRUE))
+  mutate(variety = fct_reorder(variety, daily_harvest_lb, sum))
   
   # mutate(rank = 1:n())
   
@@ -269,8 +269,6 @@ garden_cum %>%
 
 anim_save("cumveggies.gif")
 
-
- # play around with the location of the ordering code (jet star should be on bottom and amish paste on top)   ya ordering is wrong
 
 ```
 
@@ -308,6 +306,17 @@ ggmap(mallorca_map) +
                  y = lat, 
                  color = ele),
              size = .5) +
+  geom_point(data = mallorca_bike_day7, 
+             aes(x = lon,
+                 y = lat), 
+             size = .3, 
+             color = "red") +
+  annotate("text", 
+           x = 2.57, 
+           y = 39.65, 
+           color = "red", 
+           label = "City of Origin: Palma",
+           size = 2.5) +
   scale_color_viridis_c(option = "magma") +
   theme_map() +
   theme(legend.background = element_blank()) +
@@ -336,9 +345,45 @@ knitr::include_graphics("bikepath.gif")
   
   5. In this exercise, you get to meet my sister, Heather! She is a proud Mac grad, currently works as a Data Scientist at 3M where she uses R everyday, and for a few years (while still holding a full-time job) she was a pro triathlete. You are going to map one of her races. The data from each discipline of the Ironman 70.3 Pan Am championships, Panama is in a separate file - `panama_swim`, `panama_bike`, and `panama_run`. Create a similar map to the one you created with my cycling data. You will need to make some small changes: 1. combine the files (HINT: `bind_rows()`, 2. make the leading dot a different color depending on the event (for an extra challenge, make it a different image using `geom_image()!), 3. CHALLENGE (optional): color by speed, which you will need to compute on your own from the data. You can read Heather's race report [here](https://heatherlendway.com/2016/02/10/ironman-70-3-pan-american-championships-panama-race-report/). She is also in the Macalester Athletics [Hall of Fame](https://athletics.macalester.edu/honors/hall-of-fame/heather-lendway/184) and still has records at the pool. 
   
-```{r}
+```{r, eval = FALSE}
+
+full_panama <- bind_rows(panama_swim, panama_bike, panama_run) 
+
+panama_map <- get_stamenmap(
+    bbox = c(left = -79.60, bottom = 8.9059, right = -79.44, top = 8.9946), 
+    maptype = "terrain",
+    zoom = 13)
+
+ggmap(panama_map) +
+  geom_path(data = full_panama, 
+             aes(x = lon, 
+                 y = lat, 
+                 color = event),
+             size = .5) +
+  scale_color_viridis_d(option = "magma") +
+  geom_point(data = full_panama, 
+             aes(x = lon, 
+                 y = lat, 
+                 color = event)) +
+  theme_map() +
+  theme(legend.background = element_blank()) +
+  labs(title = "Panama Bike Path",
+       subtitle = "hrminsec: {frame_along}",
+       x = "",
+       y = "") +
+  transition_reveal(hrminsec)
+
+anim_save("triathlon.gif")
 
 ```
+
+
+```{r}
+
+knitr::include_graphics("triathlon.gif")
+
+```
+
   
 ## COVID-19 data
 
@@ -349,6 +394,63 @@ knitr::include_graphics("bikepath.gif")
   * Animate the plot to reveal the pattern by date. Display the date as the subtitle. Add a leading point to each state's line (`geom_point()`) and add the state name as a label (`geom_text()` - you should look at the `check_overlap` argument).  
   * Use the `animate()` function to have 200 frames in your animation and make it 30 seconds long. 
   * Comment on what you observe.
+  
+  
+```{r}
+
+weeklycovid19 <- covid19 %>% 
+  mutate(perweek = lag(cases, 7, order_by = date)) %>% 
+  replace_na(list(perweek= 0)) %>% 
+  group_by(state) %>% 
+  mutate(cumperweek = cumsum(perweek)) %>% 
+  ungroup() %>% 
+  filter(cumperweek > 20)
+
+```
+
+
+```{r, eval = FALSE}
+
+COVID19plot <- weeklycovid19 %>% 
+  ggplot(aes(x = cumperweek, 
+             y = perweek, 
+             color = state)) +
+  geom_path() +
+  geom_point() +
+scale_y_log10(breaks = 
+                  scales::trans_breaks(
+                    "log10", function(x)10^x),
+                labels = scales::comma) +
+  scale_x_log10(breaks = 
+                  scales::trans_breaks(
+                    "log10", function(x)10^x),
+                labels = scales::comma) +
+  geom_text(aes(label = state)) +
+  labs(title = "Cumulative Number of COVID19 Cases per Week as Shown by State",
+       subtitle = "date: {frame_along}",
+       x = "", 
+       y = "") +
+  theme(axis.line = element_blank(), 
+        panel.grid = element_blank(),
+        axis.text.y = element_blank(),
+        legend.position = "none") +
+  transition_reveal(date) 
+
+animate(COVID19plot, nframes = 200, duration = 30)
+
+anim_save("COVID19.gif")
+
+#how to include check_overlap =
+
+```
+  
+  
+```{r}
+
+knitr::include_graphics("COVID19.gif")
+
+```
+
   
   7. In this exercise you will animate a map of the US, showing how cumulative COVID-19 cases per 10,000 residents has changed over time. This is similar to exercises 11 & 12 from the previous exercises, with the added animation! So, in the end, you should have something like the static map you made there, but animated over all the days. The code below gives the population estimates for each state and loads the `states_map` data. Here is a list of details you should include in the plot:
   

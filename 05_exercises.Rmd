@@ -260,11 +260,16 @@ garden_cum %>%
              # factor(cum_harvest_lb, variety), 
              fill = variety)) +
   geom_area(position = "stack") +
-  labs(title = "", 
+  labs(title = "Cumulative Tomato Harvest by Variety", 
        subtitle = "date: {frame_along}",
        x = "", 
        y = "", 
        color = "variety") +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        axis.line = element_line(color = "black",
+                                 linetype = "solid"), 
+        axis.ticks = element_line(color = "black")) +
   transition_reveal(date)
 
 anim_save("cumveggies.gif")
@@ -399,12 +404,17 @@ knitr::include_graphics("triathlon.gif")
 ```{r}
 
 weeklycovid19 <- covid19 %>% 
+  filter(cases >= 20) %>% 
+  group_by(state) %>% 
   mutate(perweek = lag(cases, 7, order_by = date)) %>% 
   replace_na(list(perweek= 0)) %>% 
-  group_by(state) %>% 
-  mutate(cumperweek = cumsum(perweek)) %>% 
-  ungroup() %>% 
-  filter(cumperweek > 20)
+  mutate(newperweek = cases - perweek,
+         state_ordered = fct_reorder2(state,
+                                      date,
+                                      cases)) %>% 
+  group_by(state_ordered) %>% 
+  arrange(state_ordered, date)
+  
 
 ```
 
@@ -412,11 +422,11 @@ weeklycovid19 <- covid19 %>%
 ```{r, eval = FALSE}
 
 COVID19plot <- weeklycovid19 %>% 
-  ggplot(aes(x = cumperweek, 
-             y = perweek, 
-             color = state)) +
+  ggplot(aes(x = cases, 
+             y = newperweek,
+             group = state_ordered)) +
   geom_path() +
-  geom_point() +
+  geom_point(color = "red") +
 scale_y_log10(breaks = 
                   scales::trans_breaks(
                     "log10", function(x)10^x),
@@ -425,22 +435,23 @@ scale_y_log10(breaks =
                   scales::trans_breaks(
                     "log10", function(x)10^x),
                 labels = scales::comma) +
-  geom_text(aes(label = state)) +
+  geom_text(aes(label = state), 
+            check_overlap = T) +
   labs(title = "Cumulative Number of COVID19 Cases per Week as Shown by State",
        subtitle = "date: {frame_along}",
        x = "", 
        y = "") +
-  theme(axis.line = element_blank(), 
-        panel.grid = element_blank(),
-        axis.text.y = element_blank(),
-        legend.position = "none") +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        axis.line = element_line(color = "black",
+                                 linetype = "solid"), 
+        axis.ticks = element_line(color = "black")) +
   transition_reveal(date) 
 
 animate(COVID19plot, nframes = 200, duration = 30)
 
 anim_save("COVID19.gif")
 
-#how to include check_overlap =
 
 ```
   
@@ -451,6 +462,9 @@ knitr::include_graphics("COVID19.gif")
 
 ```
 
+*The beginning of the plot is a bit erratic, as the numbers of cases is less consistent at the beginning of the pandemic, but overall the trend is fairly linear in the positive direction*
+
+  
   
   7. In this exercise you will animate a map of the US, showing how cumulative COVID-19 cases per 10,000 residents has changed over time. This is similar to exercises 11 & 12 from the previous exercises, with the added animation! So, in the end, you should have something like the static map you made there, but animated over all the days. The code below gives the population estimates for each state and loads the `states_map` data. Here is a list of details you should include in the plot:
   
@@ -469,6 +483,51 @@ census_pop_est_2018 <- read_csv("https://www.dropbox.com/s/6txwv3b4ng7pepe/us_ce
 
 states_map <- map_data("state")
 ```
+
+
+```{r, eval = FALSE}
+
+states_map <- map_data("state")
+
+statemapcovid19 <- covid19 %>% 
+  mutate(state = str_to_lower(state)) %>%  
+  left_join(census_pop_est_2018, 
+            by = c("state")) %>% 
+  mutate(per10k = (cases/est_pop_2018)*10000) %>%
+  mutate(weekday = wday(date, label = TRUE)) %>% 
+  filter(weekday == "Fri") %>% 
+  ggplot() + 
+  geom_map(map = states_map, 
+           aes(map_id = state, 
+               fill = per10k, 
+               group = date)) +
+  expand_limits(x = states_map$long, y = states_map$lat) +
+  theme_map() +
+  scale_fill_viridis_c(option = "magma") +
+  labs(title = "Most Recent Total Cumulative Number of COVID-19 Cases (per 10,000 people) by State in the US",
+       subtitle = "date: {frame_time}", 
+       y = "", 
+       x = "")+ 
+  transition_time(date) +
+  theme(plot.title.position= "plot") 
+
+animate(statemapcovid19, nframes = 200, end_pause = 10)
+
+anim_save("USCOVID.gif")
+
+
+```  
+
+
+```{r}
+
+knitr::include_graphics("USCOVID.gif")
+
+```
+
+*Comment: *
+
+
 
 ## Your first `shiny` app (for next week!)
 

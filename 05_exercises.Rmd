@@ -1,6 +1,6 @@
 ---
 title: 'Weekly Exercises #5'
-author: "Stephanie Konadu-Acheampong with help from Jennifer Huang"
+author: "Stephanie Konadu-Acheampong with help from Jennifer Huang and Cynthia Aguilar"
 output: 
   html_document:
     keep_md: TRUE
@@ -13,7 +13,7 @@ output:
 
 
 ```{r setup, include=FALSE}
-#knitr::opts_chunk$set(echo = TRUE, error=TRUE, message=FALSE, warning=FALSE)
+knitr::opts_chunk$set(echo = TRUE, error=TRUE, message=FALSE, warning=FALSE)
 ```
 
 ```{r libraries}
@@ -462,7 +462,7 @@ knitr::include_graphics("COVID19.gif")
 
 ```
 
-*The beginning of the plot is a bit erratic, as the numbers of cases is less consistent at the beginning of the pandemic, but overall the trend is fairly linear in the positive direction*
+*The beginning of the plot is a bit erratic, as the numbers of cases is less consistent at the beginning of the pandemic, but overall the trend is fairly linear in the positive direction. Toward the end, as the number of cases decline, the lines fall again on the whole (although a few continue to go up)*
 
   
   
@@ -538,6 +538,10 @@ NOT DUE THIS WEEK! If any of you want to work ahead, this will be on next week's
 ## GitHub link
 
   9. Below, provide a link to your GitHub page with this set of Weekly Exercises. Specifically, if the name of the file is 05_exercises.Rmd, provide a link to the 05_exercises.md file, which is the one that will be most readable on GitHub. If that file isn't very readable, then provide a link to your main GitHub page.
+
+https://github.com/skonadua/WeeklyExercises5/blob/main/05_exercises.md
+
+*my plotly plots don't show up in the md file ): *
 
 
 **DID YOU REMEMBER TO UNCOMMENT THE OPTIONS AT THE TOP?**
